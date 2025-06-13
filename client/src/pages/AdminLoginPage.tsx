@@ -129,11 +129,21 @@ export default function AdminLoginPage() {
           </CardContent>
         </Card>
         
-        <div className="text-center">
+        <div className="text-center space-y-2">
+          <p className="text-sm text-gray-600">
+            Belum punya akun?{" "}
+            <Button 
+              variant="link" 
+              onClick={() => setLocation("/register")}
+              className="text-primary hover:text-primary/80 p-0 h-auto"
+            >
+              Daftar di sini
+            </Button>
+          </p>
           <Button 
             variant="link" 
             onClick={() => setLocation("/")}
-            className="text-primary hover:text-secondary"
+            className="text-gray-600 hover:text-gray-800"
           >
             Kembali ke Beranda
           </Button>
