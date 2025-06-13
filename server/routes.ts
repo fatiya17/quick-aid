@@ -1,11 +1,34 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { loginSchema, reportFormSchema } from "@shared/schema";
+import { loginSchema, reportFormSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
+  app.post("/api/register", async (req, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username sudah digunakan" });
+      }
+      
+      const user = await storage.createUser(userData);
+      res.json({
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        role: user.role,
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(400).json({ message: "Data registrasi tidak valid" });
+    }
+  });
+
   app.post("/api/login", async (req, res) => {
     try {
       const { username, password } = loginSchema.parse(req.body);
