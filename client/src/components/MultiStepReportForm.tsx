@@ -74,7 +74,7 @@ export default function MultiStepReportForm() {
     let isValid = false;
     
     if (currentStep === 1) {
-      isValid = await form.trigger(["disasterType", "description"]);
+      isValid = await form.trigger(["disasterType", "description", "reporterName", "reporterPhone", "reporterEmail"]);
     } else if (currentStep === 2) {
       isValid = await form.trigger(["location"]);
     } else {
