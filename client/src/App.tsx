@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/lib/theme";
 import Navigation from "@/components/Navigation";
 import HomePage from "@/pages/HomePage";
 import AdminLoginPage from "@/pages/AdminLoginPage";
+import UserRegisterPage from "@/pages/UserRegisterPage";
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import ReportTrackingPage from "@/pages/ReportTrackingPage";
 import InteractiveMapPage from "@/pages/InteractiveMapPage";
