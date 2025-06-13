@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Shield, Menu, X } from "lucide-react";
+import { Shield, Menu, X, Sun, Moon } from "lucide-react";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
+import { useTheme } from "@/lib/theme";
 
 export default function Navigation() {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const user = getCurrentUser();
+  const { theme, setTheme } = useTheme();
 
   const navItems = [
     { label: "Beranda", href: "/" },
@@ -16,14 +18,14 @@ export default function Navigation() {
   ];
 
   return (
-    <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <Shield className="text-white text-sm" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Quick Aid</span>
+            <span className="text-xl font-bold">Quick Aid</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -35,16 +37,27 @@ export default function Navigation() {
                 className={`transition-colors ${
                   location === item.href
                     ? "text-primary font-medium"
-                    : "text-gray-700 hover:text-primary"
+                    : "text-foreground/70 hover:text-primary"
                 }`}
               >
                 {item.label}
               </Link>
             ))}
             
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              className="h-8 w-8 px-0"
+            >
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </Button>
+            
             {user ? (
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   Selamat datang, {user.name || user.username}
                 </span>
                 {isAdmin() ? (
@@ -65,7 +78,7 @@ export default function Navigation() {
               </div>
             ) : (
               <Link href="/admin/login">
-                <Button className="bg-primary text-white hover:bg-secondary">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
                   <Shield className="mr-2 h-4 w-4" />
                   Login Admin
                 </Button>
@@ -74,16 +87,27 @@ export default function Navigation() {
           </div>
 
           {/* Mobile menu button */}
-          <button
-            className="md:hidden p-2"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <X className="text-gray-700" />
-            ) : (
-              <Menu className="text-gray-700" />
-            )}
-          </button>
+          <div className="md:hidden flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              className="h-8 w-8 px-0"
+            >
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </Button>
+            <button
+              className="p-2"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? (
+                <X className="text-foreground" />
+              ) : (
+                <Menu className="text-foreground" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -94,7 +118,7 @@ export default function Navigation() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="block px-3 py-2 text-gray-700 hover:text-primary"
+                  className="block px-3 py-2 text-foreground/70 hover:text-primary"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.label}
@@ -102,7 +126,7 @@ export default function Navigation() {
               ))}
               <div className="px-3 py-2">
                 <Link href="/admin/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full bg-primary text-white hover:bg-secondary">
+                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                     <Shield className="mr-2 h-4 w-4" />
                     Login Admin
                   </Button>

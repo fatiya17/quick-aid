@@ -1,78 +1,18 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { Shield, Bolt, MapPin, Phone, FileText, CheckCircle, Clock, Users, TrendingUp, MapPinned, Info } from "lucide-react";
-import { reportFormSchema, type ReportFormData } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
-import { useGeolocation } from "@/hooks/use-geolocation";
+import { Shield, Bolt, MapPin, Phone, FileText, CheckCircle, Clock, Users, TrendingUp, MapPinned, Info, CheckSquare, AlertTriangle, Heart, Home } from "lucide-react";
 import { useLocation } from "wouter";
+import MultiStepReportForm from "@/components/MultiStepReportForm";
+import Footer from "@/components/Footer";
 
 export default function HomePage() {
-  const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const queryClient = useQueryClient();
-  const { getCurrentPosition, latitude, longitude, loading: locationLoading } = useGeolocation();
 
   // Fetch statistics
   const { data: stats } = useQuery({
     queryKey: ["/api/stats"],
   });
-
-  const form = useForm<ReportFormData>({
-    resolver: zodResolver(reportFormSchema),
-    defaultValues: {
-      disasterType: "",
-      location: "",
-      description: "",
-      reporterName: "",
-      reporterPhone: "",
-      reporterEmail: "",
-      status: "pending",
-    },
-  });
-
-  const reportMutation = useMutation({
-    mutationFn: async (data: ReportFormData) => {
-      const reportData = {
-        ...data,
-        latitude: latitude?.toString(),
-        longitude: longitude?.toString(),
-      };
-      const response = await apiRequest("POST", "/api/reports", reportData);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Laporan berhasil dikirim!",
-        description: `Kode tracking: ${data.code}`,
-      });
-      form.reset();
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Gagal mengirim laporan",
-        description: error.message || "Terjadi kesalahan",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (data: ReportFormData) => {
-    reportMutation.mutate(data);
-  };
-
-  const handleGetLocation = () => {
-    getCurrentPosition();
-  };
 
   const features = [
     {
@@ -92,144 +32,188 @@ export default function HomePage() {
     }
   ];
 
+  const disasterTips = [
+    {
+      icon: AlertTriangle,
+      title: "Saat Gempa Bumi",
+      color: "bg-red-50 dark:bg-red-950/20",
+      iconColor: "bg-red-500",
+      tips: [
+        "Berlindung di bawah meja yang kuat",
+        "Jauhi jendela dan benda yang bisa jatuh",
+        "Keluar dengan tenang setelah guncangan berhenti",
+        "Waspada gempa susulan"
+      ]
+    },
+    {
+      icon: MapPin,
+      title: "Saat Banjir",
+      color: "bg-blue-50 dark:bg-blue-950/20",
+      iconColor: "bg-blue-500",
+      tips: [
+        "Pindah ke tempat yang lebih tinggi",
+        "Matikan listrik dan gas",
+        "Siapkan makanan dan air bersih",
+        "Hindari berjalan di air yang mengalir"
+      ]
+    },
+    {
+      icon: Heart,
+      title: "Saat Kebakaran",
+      color: "bg-orange-50 dark:bg-orange-950/20",
+      iconColor: "bg-orange-500",
+      tips: [
+        "Keluar dengan posisi merangkak",
+        "Tutup pintu untuk menahan api",
+        "Jangan gunakan lift",
+        "Kumpul di titik aman yang ditentukan"
+      ]
+    }
+  ];
+
+  const educationCards = [
+    {
+      icon: Info,
+      title: "Tips Saat Bencana",
+      color: "bg-blue-50 dark:bg-blue-950/20",
+      iconColor: "bg-primary",
+      tips: [
+        "Tetap tenang & jangan panik",
+        "Ikuti instruksi petugas",
+        "Persiapkan tas darurat"
+      ]
+    },
+    {
+      icon: Phone,
+      title: "Nomor Darurat",
+      color: "bg-yellow-50 dark:bg-yellow-950/20",
+      iconColor: "bg-warning",
+      tips: [
+        "BNPB: 117",
+        "Basarnas: 115",
+        "Ambulan: 118"
+      ]
+    },
+    {
+      icon: CheckSquare,
+      title: "SOP Evakuasi",
+      color: "bg-green-50 dark:bg-green-950/20",
+      iconColor: "bg-success",
+      tips: [
+        "Tentukan titik kumpul keluarga",
+        "Matikan listrik, gas sebelum keluar",
+        "Ikuti jalur evakuasi resmi"
+      ]
+    }
+  ];
+
+  const aboutFeatures = [
+    {
+      icon: Users,
+      title: "Dukungan pengguna lokal & filter peta",
+      description: "Platform yang mudah digunakan dengan dukungan komunitas lokal dan filter peta yang canggih."
+    },
+    {
+      icon: FileText,
+      title: "Form pelaporan mudah & aman",
+      description: "Interface yang intuitif memungkinkan pelaporan cepat dengan validasi data yang akurat."
+    },
+    {
+      icon: Shield,
+      title: "Dashboard admin untuk validasi cepat",
+      description: "Sistem admin yang responsif untuk memvalidasi dan menindaklanjuti laporan dengan cepat."
+    },
+    {
+      icon: TrendingUp,
+      title: "Data terintegrasi & terintegrasi cloud Azure",
+      description: "Infrastruktur cloud yang handal dengan Microsoft Azure untuk performa dan keamanan optimal."
+    }
+  ];
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary to-secondary text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-                Laporkan Bencana Secara Real-Time di Seluruh Indonesia
-              </h1>
-              <p className="text-xl text-blue-100">
-                Quick Aid adalah platform pelaporan bencana berbasis teknologi yang memudahkan masyarakat melaporkan dan memantau bencana alam secara langsung di seluruh wilayah Indonesia.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  size="lg" 
-                  className="bg-alert text-white hover:bg-orange-600 transform hover:scale-105 transition-all shadow-lg"
-                  onClick={() => document.getElementById("quick-report")?.scrollIntoView({ behavior: "smooth" })}
-                >
-                  <FileText className="mr-2 h-5 w-5" />
-                  Lapor Sekarang
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="bg-white text-primary hover:bg-gray-50 border-white/20"
-                  onClick={() => setLocation("/map")}
-                >
-                  <MapPin className="mr-2 h-5 w-5" />
-                  Lihat Peta
-                </Button>
-              </div>
-            </div>
-            <div className="relative">
-              {/* Mobile App Mockup */}
-              <div className="relative mx-auto w-80 h-96 bg-blue-400 rounded-3xl p-4 shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                <div className="w-full h-full bg-white rounded-2xl shadow-inner overflow-hidden">
-                  <div className="bg-primary text-white p-4 text-center">
-                    <MapPin className="mx-auto text-2xl mb-2" />
-                    <div className="text-sm font-medium">Quick Aid Mobile</div>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    <div className="flex items-center space-x-3 bg-red-50 p-3 rounded-lg">
-                      <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                      <div className="text-sm text-red-800">Banjir - Jakarta Utara</div>
-                    </div>
-                    <div className="flex items-center space-x-3 bg-yellow-50 p-3 rounded-lg">
-                      <div className="w-3 h-3 bg-warning rounded-full"></div>
-                      <div className="text-sm text-yellow-800">Gempa - Sumedang</div>
-                    </div>
-                    <div className="flex items-center space-x-3 bg-green-50 p-3 rounded-lg">
-                      <div className="w-3 h-3 bg-success rounded-full"></div>
-                      <div className="text-sm text-green-800">Kebakaran - Jakarta</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* Floating Elements */}
-              <div className="absolute -top-4 -left-4 bg-white rounded-lg p-3 shadow-lg animate-bounce">
-                <FileText className="text-alert text-lg" />
-              </div>
-              <div className="absolute -bottom-4 -right-4 bg-white rounded-lg p-3 shadow-lg">
-                <TrendingUp className="text-success text-lg" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Statistics Section */}
-      <section className="py-16 bg-white">
+      <section className="bg-gradient-to-br from-primary via-primary/90 to-secondary text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Dampak Quick Aid</h2>
-            <p className="text-lg text-gray-600">Platform terpercaya untuk pelaporan bencana di Indonesia</p>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+              Quick Aid
+            </h1>
+            <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+              Platform Pelaporan Bencana Indonesia berbasis Cloud Computing untuk melaporkan dan memantau kejadian bencana alam secara real-time
+            </p>
           </div>
           
-          <div className="grid md:grid-cols-4 gap-8">
-            <Card className="text-center p-6 bg-blue-50">
-              <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FileText className="text-white text-2xl" />
-                </div>
-                <div className="text-3xl font-bold text-primary">{stats?.total || 0}</div>
-                <div className="text-gray-600 font-medium">Total Laporan</div>
+          {/* Stats Section */}
+          <div className="grid md:grid-cols-4 gap-6 mb-12">
+            <Card className="bg-white/10 backdrop-blur border-white/20">
+              <CardContent className="p-6 text-center">
+                <FileText className="w-8 h-8 text-white mx-auto mb-2" />
+                <div className="text-2xl font-bold text-white">{(stats as any)?.total || 0}</div>
+                <div className="text-white/80 text-sm">Total Laporan</div>
               </CardContent>
             </Card>
-            
-            <Card className="text-center p-6 bg-green-50">
-              <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-success rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="text-white text-2xl" />
-                </div>
-                <div className="text-3xl font-bold text-success">{stats?.resolved || 0}</div>
-                <div className="text-gray-600 font-medium">Telah Ditangani</div>
+            <Card className="bg-white/10 backdrop-blur border-white/20">
+              <CardContent className="p-6 text-center">
+                <Clock className="w-8 h-8 text-white mx-auto mb-2" />
+                <div className="text-2xl font-bold text-white">15</div>
+                <div className="text-white/80 text-sm">Menit Rata-rata</div>
               </CardContent>
             </Card>
-            
-            <Card className="text-center p-6 bg-orange-50">
-              <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-alert rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Clock className="text-white text-2xl" />
-                </div>
-                <div className="text-3xl font-bold text-alert">2.5</div>
-                <div className="text-gray-600 font-medium">Jam Rata-rata Respon</div>
+            <Card className="bg-white/10 backdrop-blur border-white/20">
+              <CardContent className="p-6 text-center">
+                <CheckCircle className="w-8 h-8 text-white mx-auto mb-2" />
+                <div className="text-2xl font-bold text-white">{(stats as any)?.resolved || 0}</div>
+                <div className="text-white/80 text-sm">Ditangani</div>
               </CardContent>
             </Card>
-            
-            <Card className="text-center p-6 bg-purple-50">
-              <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="text-white text-2xl" />
-                </div>
-                <div className="text-3xl font-bold text-purple-600">15,420</div>
-                <div className="text-gray-600 font-medium">Pengguna Aktif</div>
+            <Card className="bg-white/10 backdrop-blur border-white/20">
+              <CardContent className="p-6 text-center">
+                <Users className="w-8 h-8 text-white mx-auto mb-2" />
+                <div className="text-2xl font-bold text-white">24/7</div>
+                <div className="text-white/80 text-sm">Siaga Darurat</div>
               </CardContent>
             </Card>
+          </div>
+
+          <div className="text-center">
+            <Button 
+              size="lg" 
+              className="bg-white text-primary hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
+              onClick={() => setLocation("/map")}
+            >
+              <MapPin className="mr-2 h-5 w-5" />
+              Lihat Peta Bencana
+            </Button>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-20 bg-muted/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Mengapa Quick Aid?</h2>
-            <p className="text-lg text-gray-600">Solusi lengkap untuk pelaporan dan penanganan bencana</p>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Mengapa Quick Aid?
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Solusi terdepan dalam pelaporan dan pemantauan bencana alam di Indonesia
+            </p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="p-8 hover:shadow-md transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-6">
-                    <feature.icon className="text-white text-xl" />
+              <Card key={index} className="text-center hover:shadow-lg transition-shadow">
+                <CardContent className="p-8">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <feature.icon className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
+                  <h3 className="text-xl font-bold mb-4">
+                    {feature.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -237,146 +221,133 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Quick Report Section */}
-      <section id="quick-report" className="py-16 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Laporkan Bencana Sekarang</h2>
-            <p className="text-lg text-gray-600">Bantu sesama dengan melaporkan kondisi bencana di sekitar Anda</p>
+      {/* About Features */}
+      <section className="py-20 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Tentang Quick Aid
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Platform inovatif yang menggabungkan teknologi cloud Azure dengan kemudahan akses untuk semua lapisan masyarakat
+            </p>
           </div>
           
-          <Card className="bg-gradient-to-r from-blue-50 to-orange-50 p-8">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="disasterType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Jenis Bencana *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Pilih jenis bencana" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="banjir">🌊 Banjir</SelectItem>
-                            <SelectItem value="gempa">🌍 Gempa Bumi</SelectItem>
-                            <SelectItem value="kebakaran">🔥 Kebakaran</SelectItem>
-                            <SelectItem value="longsor">⛰️ Tanah Longsor</SelectItem>
-                            <SelectItem value="tsunami">🌊 Tsunami</SelectItem>
-                            <SelectItem value="angin">💨 Angin Kencang</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Lokasi Kejadian *</FormLabel>
-                        <div className="relative">
-                          <FormControl>
-                            <Input placeholder="Masukkan alamat lengkap" {...field} />
-                          </FormControl>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3"
-                            onClick={handleGetLocation}
-                            disabled={locationLoading}
-                          >
-                            <MapPin className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Deskripsi Kejadian *</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          rows={4} 
-                          placeholder="Jelaskan situasi bencana yang terjadi..." 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="reporterName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nama Pelapor</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nama Anda (opsional)" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="reporterPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nomor Telepon</FormLabel>
-                        <FormControl>
-                          <Input type="tel" placeholder="Nomor telepon (opsional)" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="reporterEmail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="Email untuk tracking laporan (opsional)" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <Button 
-                  type="submit" 
-                  className="w-full bg-alert text-white py-4 hover:bg-orange-600 transform hover:scale-[1.02] transition-all shadow-lg"
-                  disabled={reportMutation.isPending}
-                >
-                  <FileText className="mr-2 h-5 w-5" />
-                  {reportMutation.isPending ? "Mengirim..." : "Kirim Laporan Darurat"}
-                </Button>
-              </form>
-            </Form>
-          </Card>
+          <div className="grid md:grid-cols-2 gap-8">
+            {aboutFeatures.map((feature, index) => (
+              <Card key={index} className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <feature.icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold mb-2">
+                        {feature.title}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
+
+      {/* Education & Preparedness Section */}
+      <section className="py-20 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Edukasi & Kesiapsiagaan
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Tingkatkan kesiapan Anda menghadapi bencana dengan panduan dan informasi penting
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            {educationCards.map((card, index) => (
+              <Card key={index} className={`${card.color} border-0 hover:shadow-lg transition-shadow`}>
+                <CardContent className="p-8">
+                  <div className={`w-16 h-16 ${card.iconColor} rounded-full flex items-center justify-center mx-auto mb-6`}>
+                    <card.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-center mb-6">
+                    {card.title}
+                  </h3>
+                  <ul className="space-y-3">
+                    {card.tips.map((tip, tipIndex) => (
+                      <li key={tipIndex} className="text-sm flex items-start">
+                        <CheckCircle className="w-4 h-4 text-success mr-2 mt-0.5 flex-shrink-0" />
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Disaster Tips Section */}
+      <section className="py-20 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Tips Menghadapi Bencana
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Panduan praktis untuk tetap aman dalam berbagai situasi darurat
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {disasterTips.map((tip, index) => (
+              <Card key={index} className={`${tip.color} border-0 hover:shadow-lg transition-shadow`}>
+                <CardContent className="p-8">
+                  <div className={`w-16 h-16 ${tip.iconColor} rounded-full flex items-center justify-center mx-auto mb-6`}>
+                    <tip.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-center mb-6">
+                    {tip.title}
+                  </h3>
+                  <ul className="space-y-3">
+                    {tip.tips.map((tipText, tipIndex) => (
+                      <li key={tipIndex} className="text-sm flex items-start">
+                        <CheckCircle className="w-4 h-4 text-success mr-2 mt-0.5 flex-shrink-0" />
+                        {tipText}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Reporting Form Section */}
+      <section className="py-20 bg-muted/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Laporkan Bencana
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Bantu kami memantau situasi bencana dengan melaporkan kejadian yang Anda saksikan
+            </p>
+          </div>
+          
+          <MultiStepReportForm />
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 }
