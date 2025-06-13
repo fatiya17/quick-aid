@@ -1,4 +1,6 @@
 import { users, reports, type User, type InsertUser, type Report, type InsertReport } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -25,102 +27,68 @@ export interface IStorage {
   }>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private reports: Map<number, Report>;
-  private currentUserId: number;
-  private currentReportId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.reports = new Map();
-    this.currentUserId = 1;
-    this.currentReportId = 1;
-    
-    // Create default admin user
-    this.createUser({
-      username: "admin",
-      password: "admin123",
-      role: "admin",
-      name: "Ahmad Saputra"
-    });
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async getReport(id: number): Promise<Report | undefined> {
-    return this.reports.get(id);
+    const [report] = await db.select().from(reports).where(eq(reports.id, id));
+    return report || undefined;
   }
 
   async getReportByCode(code: string): Promise<Report | undefined> {
-    return Array.from(this.reports.values()).find(
-      (report) => report.code === code,
-    );
+    const [report] = await db.select().from(reports).where(eq(reports.code, code));
+    return report || undefined;
   }
 
   async getReports(): Promise<Report[]> {
-    return Array.from(this.reports.values()).sort((a, b) => 
-      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-    );
+    return await db.select().from(reports).orderBy(reports.createdAt);
   }
 
   async getReportsByUser(reporterEmail: string): Promise<Report[]> {
-    return Array.from(this.reports.values())
-      .filter(report => report.reporterEmail === reporterEmail)
-      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    return await db.select().from(reports).where(eq(reports.reporterEmail, reporterEmail));
   }
 
   async createReport(insertReport: InsertReport): Promise<Report> {
-    const id = this.currentReportId++;
     const code = `QA-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substr(2, 3).toUpperCase()}`;
-    const now = new Date();
     
-    const report: Report = { 
-      ...insertReport, 
-      id, 
-      code, 
-      createdAt: now, 
-      updatedAt: now 
-    };
-    
-    this.reports.set(id, report);
+    const [report] = await db
+      .insert(reports)
+      .values({
+        ...insertReport,
+        code,
+        status: insertReport.status || "pending"
+      })
+      .returning();
     return report;
   }
 
   async updateReportStatus(id: number, status: string, assignedTo?: string): Promise<Report | undefined> {
-    const report = this.reports.get(id);
-    if (!report) return undefined;
-    
-    const updatedReport: Report = {
-      ...report,
-      status,
-      assignedTo: assignedTo || report.assignedTo,
-      updatedAt: new Date()
-    };
-    
-    this.reports.set(id, updatedReport);
-    return updatedReport;
+    const [report] = await db
+      .update(reports)
+      .set({ status, assignedTo })
+      .where(eq(reports.id, id))
+      .returning();
+    return report || undefined;
   }
 
   async getReportsByStatus(status: string): Promise<Report[]> {
-    return Array.from(this.reports.values())
-      .filter(report => report.status === status)
-      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    return await db.select().from(reports).where(eq(reports.status, status));
   }
 
   async getReportStats(): Promise<{
@@ -130,7 +98,7 @@ export class MemStorage implements IStorage {
     inProgress: number;
     resolved: number;
   }> {
-    const allReports = Array.from(this.reports.values());
+    const allReports = await db.select().from(reports);
     
     return {
       total: allReports.length,
@@ -142,4 +110,26 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
+
+// Initialize database with default admin user
+async function initializeDatabase() {
+  try {
+    // Check if admin user exists
+    const existingAdmin = await storage.getUserByUsername("admin");
+    if (!existingAdmin) {
+      await storage.createUser({
+        username: "admin",
+        password: "admin123",
+        role: "admin",
+        name: "Ahmad Saputra"
+      });
+      console.log("Default admin user created");
+    }
+  } catch (error) {
+    console.error("Error initializing database:", error);
+  }
+}
+
+// Initialize on startup
+initializeDatabase();
