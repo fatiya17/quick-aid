@@ -29,6 +29,7 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/admin/login" component={AdminLoginPage} />
+      <Route path="/register" component={UserRegisterPage} />
       <Route path="/admin">
         <ProtectedAdminRoute>
           <AdminDashboardPage />
