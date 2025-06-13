@@ -15,10 +15,12 @@ export const reports = pgTable("reports", {
   code: text("code").notNull().unique(),
   disasterType: text("disaster_type").notNull(),
   location: text("location").notNull(),
+  detailedAddress: text("detailed_address"),
   description: text("description").notNull(),
   reporterName: text("reporter_name"),
   reporterPhone: text("reporter_phone"),
   reporterEmail: text("reporter_email"),
+  photos: text("photos").array(), // Array of photo URLs
   status: text("status").notNull().default("pending"), // "pending", "validated", "in_progress", "resolved"
   latitude: text("latitude"),
   longitude: text("longitude"),
@@ -46,7 +48,9 @@ export const loginSchema = z.object({
 export const reportFormSchema = insertReportSchema.extend({
   disasterType: z.string().min(1, "Jenis bencana harus dipilih"),
   location: z.string().min(1, "Lokasi harus diisi"),
+  detailedAddress: z.string().optional(),
   description: z.string().min(10, "Deskripsi minimal 10 karakter"),
+  photos: z.array(z.string()).optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
