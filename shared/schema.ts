@@ -1,18 +1,27 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+// Impor dari mysql-core, bukan pg-core
+import { mysqlTable, text, varchar, int, char, timestamp, json, mysqlEnum } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("user"), // "admin" or "user"
-  name: text("name"),
+// Ganti pgTable menjadi mysqlTable
+export const users = mysqlTable("users", {
+  id: char("id", { length: 36 }).primaryKey(),
+  nama: varchar("nama", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  password: varchar("password", { length: 255 }).notNull(),
+  role: mysqlEnum("role", ["pelapor", "petugas", "admin"]).default("pelapor").notNull(),
+  status: mysqlEnum("status", ["aktif", "nonaktif", "menunggu_verifikasi"]).default("aktif"),
+  createdAt: timestamp("createdAt").notNull(),             // <— CamelCase!
+  updatedAt: timestamp("updatedAt").notNull(), 
+  passwordResetToken: varchar("passwordResetToken", { length: 255 }),
+  passwordResetExpires: timestamp("passwordResetExpires"),
+  avatar: varchar("avatar", { length: 255 }),
 });
 
-export const reports = pgTable("reports", {
-  id: serial("id").primaryKey(),
-  code: text("code").notNull().unique(),
+// Ganti pgTable menjadi mysqlTable
+export const reports = mysqlTable("reports", {
+  id: int("id").autoincrement().primaryKey(),
+  code: text("code").notNull(),
   disasterType: text("disaster_type").notNull(),
   location: text("location").notNull(),
   detailedAddress: text("detailed_address"),
@@ -20,8 +29,9 @@ export const reports = pgTable("reports", {
   reporterName: text("reporter_name"),
   reporterPhone: text("reporter_phone"),
   reporterEmail: text("reporter_email"),
-  photos: text("photos").array(), // Array of photo URLs
-  status: text("status").notNull().default("pending"), // "pending", "validated", "in_progress", "resolved"
+  // MySQL tidak punya tipe array, jadi kita gunakan JSON
+  photos: json("photos"), // Sebelumnya: text("photos").array()
+  status: text("status").notNull().default("pending"),
   latitude: text("latitude"),
   longitude: text("longitude"),
   assignedTo: text("assigned_to"),
@@ -29,8 +39,14 @@ export const reports = pgTable("reports", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
+// Bagian Zod schema tidak perlu diubah
+export const insertUserSchema = z.object({
+  nama: z.string().min(1),
+  email: z.string().email(),
+  password: z.string().min(6),
+  role: z.enum(["pelapor", "petugas", "admin"]).optional(),
+  status: z.enum(["aktif", "nonaktif", "aktif"]).optional(),
+  avatar: z.string().url().optional(),
 });
 
 export const insertReportSchema = createInsertSchema(reports).omit({
@@ -41,8 +57,8 @@ export const insertReportSchema = createInsertSchema(reports).omit({
 });
 
 export const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
+  email: z.string().email("Email is required"),
+  password: z.string().min(6, "Password is required"),
 });
 
 export const reportFormSchema = insertReportSchema.extend({
@@ -50,7 +66,15 @@ export const reportFormSchema = insertReportSchema.extend({
   location: z.string().min(1, "Lokasi harus diisi"),
   detailedAddress: z.string().optional(),
   description: z.string().min(10, "Deskripsi minimal 10 karakter"),
-  photos: z.array(z.string()).optional(),
+  // Zod schema untuk validasi frontend tetap bisa menggunakan array
+  photos: z
+  .union([z.array(z.string()), z.string()])
+  .optional()
+  .transform((val) => {
+    if (!val) return [];
+    return Array.isArray(val) ? val : [val];
+  }),
+
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

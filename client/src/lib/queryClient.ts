@@ -24,34 +24,35 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
+export const getQueryFn: <T>(options?: { // Jadikan options opsional
+  on401?: UnauthorizedBehavior;
 }) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
+  (options) => // Hapus destructurizing agar bisa default
+    async ({ queryKey }) => {
+      // Set default behavior jika tidak disediakan
+      const unauthorizedBehavior = options?.on401 || "throw";
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
+      const res = await fetch(queryKey[0] as string, {
+        credentials: "include",
+      });
 
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
 
+      await throwIfResNotOk(res);
+      return await res.json();
+    };
+
+// --- PERUBAHAN UTAMA DI SINI ---
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
-    },
-    mutations: {
-      retry: false,
+      // Daftarkan getQueryFn sebagai fungsi query default
+      queryFn: getQueryFn({ on401: 'throw' }),
+      retry: 3,
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
 });

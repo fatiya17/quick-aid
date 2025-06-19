@@ -2,12 +2,66 @@ import { Link } from "wouter";
 import { Shield, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 
 export default function Footer() {
+  
   const footerLinks = {
     platform: [
-      { label: "Beranda", href: "/" },
-      { label: "Peta Bencana", href: "/map" },
+      { 
+        label: "Beranda", 
+        href: "#hero",
+        onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
+          e.preventDefault();
+          const element = document.getElementById("hero");
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      },
+      { 
+        label: "Tentang", 
+        href: "#tentang",
+        onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
+          e.preventDefault();
+          const element = document.getElementById("tentang");
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      },
       { label: "Laporan Saya", href: "/reports" },
-      { label: "Tentang", href: "#about" },
+      { label: "Peta Bencana", href: "/map" },
+      { 
+        label: "Laporkan Bencana", 
+        href: "#quick-report",
+        onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
+          e.preventDefault();
+          const element = document.getElementById("quick-report");
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      },
+      { 
+        label: "Mengapa Quick Aid", 
+        href: "#mengapa",
+        onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
+          e.preventDefault();
+          const element = document.getElementById("mengapa");
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      },
+      { 
+        label: "Tips Saat Terjadi Bencana", 
+        href: "#tips",
+        onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
+          e.preventDefault();
+          const element = document.getElementById("tips");
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      },
     ],
     help: [
       { label: "Cara Melaporkan", href: "#how-to-report" },
@@ -62,9 +116,19 @@ export default function Footer() {
             <ul className="space-y-3">
               {footerLinks.platform.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    {link.label}
-                  </Link>
+                  {link.onClick ? (
+                    <a 
+                      href={link.href} 
+                      onClick={link.onClick}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

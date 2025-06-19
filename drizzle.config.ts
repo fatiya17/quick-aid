@@ -7,8 +7,12 @@ if (!process.env.DATABASE_URL) {
 export default defineConfig({
   out: "./migrations",
   schema: "./shared/schema.ts",
-  dialect: "postgresql",
+  // highlight-start
+  dialect: "mysql", // Mengganti 'postgresql' menjadi 'mysql'
   dbCredentials: {
+    // Kredensial sekarang menggunakan format URL standar MySQL
+    // Contoh: mysql://user:password@hostname:port/database
     url: process.env.DATABASE_URL,
   },
+  // highlight-end
 });
